@@ -1,0 +1,65 @@
+object frmPrincipal: TfrmPrincipal
+  Left = 1662
+  Height = 600
+  Top = 103
+  Width = 800
+  Caption = 'Shooter'
+  ClientHeight = 578
+  ClientWidth = 800
+  DesignTimePPI = 100
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  OnResize = FormResize
+  OnShow = FormShow
+  LCLVersion = '2.0.10.0'
+  object glControl: TOpenGLControl
+    Left = 0
+    Height = 578
+    Top = 0
+    Width = 800
+    Align = alClient
+    AutoResizeViewport = True
+    MultiSampling = 4
+    OnKeyDown = glControlKeyDown
+    OnKeyUp = glControlKeyUp
+    OnMakeCurrent = glControlMakeCurrent
+    OnPaint = glControlPaint
+  end
+  object MainMenu1: TMainMenu
+    Left = 40
+    Top = 8
+    object MenuArquivo: TMenuItem
+      Caption = 'Arquivo'
+      object MenuSair: TMenuItem
+        Caption = 'Sair'
+        OnClick = MenuSairClick
+      end
+    end
+    object MenuPerspectiva: TMenuItem
+      Caption = 'Câmera'
+      object MenuCameraTopDown: TMenuItem
+        Caption = 'Vista de cima'
+        OnClick = MenuCameraTopDownClick
+      end
+      object MenuCameraRelativa: TMenuItem
+        Caption = 'Relativa'
+        OnClick = MenuCameraRelativaClick
+      end
+      object MenuCameraPerspectiva: TMenuItem
+        Caption = 'Perspectiva'
+        OnClick = MenuCameraPerspectivaClick
+      end
+    end
+    object MenuVisualizacao: TMenuItem
+      Caption = 'Visualização'
+      object MenuVisualizacaoPreencher: TMenuItem
+        Caption = 'Preencher'
+        OnClick = MenuVisualizacaoPreencherClick
+      end
+      object MenuVisualizacaoWireframe: TMenuItem
+        Caption = 'Wireframe'
+        OnClick = MenuVisualizacaoWireframeClick
+      end
+    end
+  end
+end
