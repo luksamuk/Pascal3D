@@ -1,16 +1,17 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 1662
+  Left = 264
   Height = 600
-  Top = 103
+  Top = 87
   Width = 800
   Caption = 'Shooter'
   ClientHeight = 578
   ClientWidth = 800
   DesignTimePPI = 100
-  Menu = MainMenu1
+  Menu = MenuPrincipal
   OnCreate = FormCreate
   OnResize = FormResize
   OnShow = FormShow
+  Position = poScreenCenter
   LCLVersion = '2.0.10.0'
   object glControl: TOpenGLControl
     Left = 0
@@ -20,18 +21,21 @@ object frmPrincipal: TfrmPrincipal
     Align = alClient
     AutoResizeViewport = True
     MultiSampling = 4
+    AlphaBits = 8
+    StencilBits = 8
     OnKeyDown = glControlKeyDown
     OnKeyUp = glControlKeyUp
     OnMakeCurrent = glControlMakeCurrent
     OnPaint = glControlPaint
   end
-  object MainMenu1: TMainMenu
+  object MenuPrincipal: TMainMenu
     Left = 40
     Top = 8
     object MenuArquivo: TMenuItem
       Caption = 'Arquivo'
       object MenuSair: TMenuItem
         Caption = 'Sair'
+        ShortCut = 81
         OnClick = MenuSairClick
       end
     end
@@ -39,15 +43,23 @@ object frmPrincipal: TfrmPrincipal
       Caption = 'Câmera'
       object MenuCameraTopDown: TMenuItem
         Caption = 'Vista de cima'
+        ShortCut = 49
         OnClick = MenuCameraTopDownClick
       end
       object MenuCameraRelativa: TMenuItem
         Caption = 'Relativa'
+        ShortCut = 50
         OnClick = MenuCameraRelativaClick
       end
       object MenuCameraPerspectiva: TMenuItem
         Caption = 'Perspectiva'
+        ShortCut = 51
         OnClick = MenuCameraPerspectivaClick
+      end
+      object MenuCameraPerspComMapa: TMenuItem
+        Caption = 'Perspectiva com Mapa'
+        ShortCut = 52
+        OnClick = MenuCameraPerspComMapaClick
       end
     end
     object MenuVisualizacao: TMenuItem

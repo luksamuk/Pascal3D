@@ -24,13 +24,15 @@ type
   TEstadoCamera = (
      etTopDown,
      etRelativa,
-     etPerspectiva
+     etPerspectiva,
+     etPerspectivaComMapa
   );
 
   { TfrmPrincipal }
 
   TfrmPrincipal = class(TForm)
-    MainMenu1: TMainMenu;
+     MenuCameraPerspComMapa: TMenuItem;
+    MenuPrincipal: TMainMenu;
     MenuArquivo: TMenuItem;
     MenuCameraRelativa: TMenuItem;
     MenuCameraTopDown: TMenuItem;
@@ -51,6 +53,7 @@ type
           {%H-}Shift: TShiftState);
     procedure glControlMakeCurrent(Sender: TObject; var Allow: boolean);
     procedure glControlPaint(Sender: TObject);
+    procedure MenuCameraPerspComMapaClick(Sender: TObject);
     procedure MenuCameraPerspectivaClick(Sender: TObject);
     procedure MenuCameraRelativaClick(Sender: TObject);
     procedure MenuCameraTopDownClick(Sender: TObject);
@@ -66,6 +69,7 @@ type
 
     vInput: TEstadoInput;
     vEstado: TEstadoCamera;
+    vWireframe: Boolean;
 
     procedure DefineEstadoInput(pKey: Word; pEstado: Boolean);
     procedure MovimentaPeloInput;
@@ -73,6 +77,7 @@ type
     procedure DesenhaMapa;
     procedure DesenhaMapaTransformado;
     procedure DesenhaMapaTransformadoPerspectiva;
+    procedure DesenhaOverlayTransparente;
     procedure DefineViewport(pLargura, pAltura: Integer);
 
     function cross(x1, y1, x2, y2: Single): Single;
@@ -83,8 +88,10 @@ type
   end;
 
 Const
+
   LarguraInterna: Single = 100;
   AlturaInterna: Single  = 100;
+
   Paredes: Array [0 .. 34] of Single = (
   {  x1  y1   x2  y2   r  g  b  }
      70, 20,  70, 70,  1, 1, 0, // Amarelo
@@ -111,11 +118,13 @@ end;
 procedure TfrmPrincipal.MenuVisualizacaoPreencherClick(Sender: TObject);
 begin
    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+   vWireframe := False;
 end;
 
 procedure TfrmPrincipal.MenuVisualizacaoWireframeClick(Sender: TObject);
 begin
    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+   vWireframe := True;
 end;
 
 procedure TfrmPrincipal.DefineEstadoInput(pKey: Word; pEstado: Boolean);
@@ -187,6 +196,8 @@ begin
    vInput.vRotateRight := False;
    vInput.vStrafeLeft  := False;
    vInput.vStrafeRight := False;
+
+   vWireframe := False;
 end;
 
 procedure TfrmPrincipal.DesenhaMapa;
@@ -297,15 +308,15 @@ procedure TfrmPrincipal.DesenhaMapaTransformadoPerspectiva;
 
       // Cálculos de perspectiva e renderização da parede.
       // Só será desenhada se estivermos à sua frente.
-      if (tz1 > 0) or (tz2 > 0) then
+      if (tz1 > 0.0) or (tz2 > 0.0) then
       begin
          // Se a linha cruza o viewplane do jogador, corte-a.
          intersecciona(tx1, tz1,  tx2, tz2,  -0.0001, 0.0001, -20, 5, ix1, iz1);
          intersecciona(tx1, tz1,  tx2, tz2,   0.0001, 0.0001,  20, 5, ix2, iz2);
 
-         if (tz1 <= 0) then
+         if (tz1 <= 0.0) then
          begin
-            if (iz1 > 0) then
+            if (iz1 > 0.0) then
             begin
                tx1 := ix1;
                tz1 := iz1;
@@ -317,9 +328,9 @@ procedure TfrmPrincipal.DesenhaMapaTransformadoPerspectiva;
             end;
          end;
 
-         if (tz2 <= 0) then
+         if (tz2 <= 0.0) then
          begin
-            if (iz1 > 0) then
+            if (iz1 > 0.0) then
             begin
                tx2 := ix1;
                tz2 := iz1;
@@ -374,12 +385,43 @@ begin
    glPointSize(1);
 end;
 
+procedure TfrmPrincipal.DesenhaOverlayTransparente;
+begin
+   if vWireframe then
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+   glPushMatrix;
+      glColor4f(0, 0, 0, 0.7);
+      glBegin(GL_QUADS);
+      glVertex2f(0, 0);
+      glVertex2f(LarguraInterna, 0);
+      glVertex2f(LarguraInterna, AlturaInterna);
+      glVertex2f(0, AlturaInterna);
+      glEnd;
+   glPopMatrix;
+
+   if vWireframe then
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+end;
+
 procedure TfrmPrincipal.DefineViewport(pLargura, pAltura: Integer);
+   function CalculaLarguraIdeal(pAltura: Integer): Integer;
+   begin
+      Result := Round((4 * pAltura) / 3);
+   end;
+var
+  xViewportX: Integer;
+  xLargura: Integer;
 begin
    glClearColor(0, 0, 0, 1);
    glEnable(GL_DEPTH_TEST);
+   glDepthFunc(GL_LEQUAL);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glEnable(GL_BLEND);
+   xLargura := CalculaLarguraIdeal(pAltura);
+   xViewportX := Round((pLargura - xLargura) / 2);
 
-   glViewport(0, 0, pLargura, pAltura);
+   glViewport(xViewportX, 0, xLargura, pAltura);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity;
    // Eixo Y cresce para baixo, origem no canto superior esquerdo
@@ -438,6 +480,7 @@ begin
    49: vEstado := etTopDown;
    50: vEstado := etRelativa;
    51: vEstado := etPerspectiva;
+   52: vEstado := etPerspectivaComMapa;
    end;
 
    DefineEstadoInput(Key, True);
@@ -465,10 +508,21 @@ begin
       etTopDown:     DesenhaMapa;
       etRelativa:    DesenhaMapaTransformado;
       etPerspectiva: DesenhaMapaTransformadoPerspectiva;
+      etPerspectivaComMapa:
+        begin
+           DesenhaMapaTransformadoPerspectiva;
+           DesenhaOverlayTransparente;
+           DesenhaMapaTransformado;
+        end;
       end;
    glPopMatrix;
 
    glControl.SwapBuffers;
+end;
+
+procedure TfrmPrincipal.MenuCameraPerspComMapaClick(Sender: TObject);
+begin
+   vEstado := etPerspectivaComMapa;
 end;
 
 procedure TfrmPrincipal.MenuCameraPerspectivaClick(Sender: TObject);
